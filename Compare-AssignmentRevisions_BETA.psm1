@@ -115,7 +115,7 @@ function Compare-AssignmentRevisions {
 		if((Get-Module ConfigurationManager) -eq $null) {
 			# The ConfigurationManager Powershell module switched filepaths at some point around CB 18##
 			# So you may need to modify this to match your local environment
-			Import-Module $CMPSModulePath @initParams 
+			Import-Module $CMPSModulePath @initParams -Scope Global
 		}
 		if((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue) -eq $null) {
 			New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $Provider @initParams
