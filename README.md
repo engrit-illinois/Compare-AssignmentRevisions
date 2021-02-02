@@ -319,5 +319,4 @@ Field formatting notes are documented below. `#` is used to represent a hexideci
 - Note: when run against a very large collection (thousands of computers), the script will slow down significantly towards the middle and end of the run. This is some sort of memory leak that I haven't been able to pinpoint. It does not break the script, but will delay completion significantly. It is advised to either run this against smaller collections, or be prepared to let it run for more than a day.  
 - If you edit the script after importing it, you will need to use the `-Force` parameter to reimport it: `Import-Module ".\Compare-AssignmentRevisions.psm1" -Force`. 
 - Ignore `Compare-AssignmentRevisions_BETA.psm1`. I use it to test changes before pushing them to the primary file.  
-
-By mseng3  
+- By mseng3. See my other projects here: https://github.com/mmseng/code-compendium.
