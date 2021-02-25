@@ -531,13 +531,18 @@ function Compare-AssignmentRevisions {
 		$comp
 	}
 	
-	# This is actually used for both Parse-Assignment and Parse-AssignmentAppDeployment
+	# This is actually used for both Parse-Assignment and Parse-AssignmentAppDeployment/Parse-AssignmentTSDeployment
+	# So $assignment here is really either an assignment or a deployment
+	# However they both use the same property names for DesiredConfigType and AssignmentName
 	function Parse-DesiredConfigType($assignment) {
 		log "Parsing DesiredConfigType for assignment..." -l 6 -v 2
 		
 		log "Deployment type: `"$($assignment._DepType)`"" -l 7 -v 3
 		# Only valid for apps, not TSes
-		if($assignment._DepType -eq "ts") {
+		if(
+			($assignment._DepType -eq "ts") -or
+			($assignment._Type -eq "ts")
+		) {
 			$result = "TS"
 		}
 		else {
