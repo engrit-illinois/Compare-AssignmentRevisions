@@ -232,6 +232,8 @@ Fields output to the CSV are documented below. The table output to the screen co
 - `DeploymentContent`: Source #7 (direct apps) or #6 (TS apps). String representing the app's name (direct apps) or the TS name (TS apps).
 - `DeploymentCollection`: Source #7 (direct apps) or #6 (TS apps). String representing the collection to which the app or TS is deployed.
 - `ApplicationName`: Source #10. The friendly name of the app.
+- `AsConfigType`: Source #6. The "DesiredConfigType" as stored by the assignment (i.e. whether the associated deployment is meant to be an Install, or an Uninstall).
+- `AsConfigType`: Source #7. The "DesiredConfigType" as stored by the deployment object (i.e. whether the deployment is meant to be an Install, or an Uninstall).
 - `AsRev1`: Source #6. The revision of the app, as stored by the assignment.
 - `AsRev2`: Source #6. The revision is stored in the assignment in two places, so I'm capturing both. However I've never seen an instance where these two differ within the same assignment.
 - `DepRev`: Source #7. The revision of the app, as stored by the deployment object.
