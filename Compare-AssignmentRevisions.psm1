@@ -621,6 +621,7 @@ function Compare-AssignmentRevisions {
 		
 		$assignment = Compare-Revisions $assignment
 		$assignment = Compare-ModelNames $assignment
+		$assignment = Compare-DesiredConfigTypes $assignment
 		
 		log "Done parsing assignment." -l 5 -v 2
 		$assignment
@@ -1010,6 +1011,28 @@ function Compare-AssignmentRevisions {
 		$assignment
 	}
 	
+	function Compare-DesiredConfigTypes($assignment) {
+		log "Comparing DesiredConfigTypes of assignment and application... " -l 5 -v 1 -nnl
+		
+		# Save custom property for whether the revisions match, for easy table printout
+		$ascf = $assignment._DesiredConfigType
+		$depcf = $assignment._Deployment._DesiredConfigType
+		
+		$same = "MISMATCH!"
+		if($ascf -eq $depcf) {
+			$same = "yes"
+			log "DesiredConfigTypes match." -nots -v 1
+		}
+		else {
+			log "DesiredConfigTypes do not match!" -nots -v 1
+		}
+		
+		$assignment | Add-Member -NotePropertyName "_DesiredConfigTypesMatch" -NotePropertyValue $same
+		
+		log "Done comparing DesiredConfigTypes." -l 5 -v 2
+		$assignment
+	}
+	
 	function Compare-ModelNames($assignment) {
 		log "Comparing ModelNames of assignment, deployment, and application... " -l 5 -v 1 -nnl
 		
@@ -1072,7 +1095,7 @@ function Compare-AssignmentRevisions {
 		# Make CSV file and add header row if file doesn't exist
 		if(!(Test-Path -PathType leaf -Path $CSVPATH)) {
 			$shutup = New-Item -ItemType File -Force -Path $CSVPATH
-			line "Computer,ClientVer,PSVer,OSVer,Make,Model,AssignmentID,AssignmentName,DeploymentName,DeploymentCollection,DeploymentContent,ApplicationName,AsConfigType,DepConfigType,AsRev1,AsRev2,DepRev,AppRev1,AppRev2,RevsMatch,ModelsMatch,AsModel1,AsModel2,DepModel1,AppModel1,AppModel2"
+			line "Computer,ClientVer,PSVer,OSVer,Make,Model,AssignmentID,AssignmentName,DeploymentName,DeploymentCollection,DeploymentContent,ApplicationName,AsConfigType,DepConfigType,ConfigTypesMatch,AsRev1,AsRev2,DepRev,AppRev1,AppRev2,RevsMatch,ModelsMatch,AsModel1,AsModel2,DepModel1,AppModel1,AppModel2"
 		}
 		
 		$line = "`"" + $assignment._Computer + "`"," +
@@ -1089,6 +1112,7 @@ function Compare-AssignmentRevisions {
 			"`"" + $assignment._Application.LocalizedDisplayName + "`"," +
 			"`"" + $assignment._DesiredConfigType + "`"," +
 			"`"" + $assignment._Deployment._DesiredConfigType + "`"," +
+			"`"" + $assignment._DesiredConfigTypesMatch + "`"," +
 			"`"" + $assignment._Revision + "`"," +
 			"`"" + $assignment._CI.CIVersion + "`"," +
 			"`"" + $assignment._Deployment._Revision + "`"," +
