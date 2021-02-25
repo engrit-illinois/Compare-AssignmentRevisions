@@ -532,7 +532,7 @@ function Compare-AssignmentRevisions {
 	}
 	
 	# This is actually used for both Parse-Assignment and Parse-AssignmentAppDeployment
-	function Parse-DesiredConfigTypeString($assignment) {
+	function Parse-DesiredConfigType($assignment) {
 		# DesiredConfigType is whether the app is deployed to "Install" (1), or Uninstall (2)
 		$configTypeNum = $assignment.DesiredConfigType
 		
@@ -615,7 +615,7 @@ function Compare-AssignmentRevisions {
 		
 		$assignment = Parse-AssignmentDeploymentType $assignment
 		$assignment = Parse-AssignmentCIs $assignment
-		$assignment = Parse-DesiredConfigTypeString $assignment
+		$assignment = Parse-DesiredConfigType $assignment
 		$assignment = Get-AssignmentDeployment $assignment
 		$assignment = Get-AssignmentApplication $assignment
 		
@@ -754,7 +754,7 @@ function Compare-AssignmentRevisions {
 		$depModelName = $depCiidParts[0] + "/" + $depCiidParts[1]
 		$deployment | Add-Member -NotePropertyName "_ModelName" -NotePropertyValue $depModelName
 		
-		$deployment = Parse-DesiredConfigTypeString $deployment
+		$deployment = Parse-DesiredConfigType $deployment
 		
 		log "Done parsing app deployment." -l 6 -v 2
 		$deployment
