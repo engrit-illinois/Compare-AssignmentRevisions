@@ -533,24 +533,30 @@ function Compare-AssignmentRevisions {
 	
 	# This is actually used for both Parse-Assignment and Parse-AssignmentAppDeployment
 	function Parse-DesiredConfigType($assignment) {
-		# DesiredConfigType is whether the app is deployed to "Install" (1), or Uninstall (2)
-		$configTypeNum = $assignment.DesiredConfigType
-		
-		# This is also encoded into the AssignmentName in the format "<app name>_<deployment collection name>_<DesiredConfigType string>"
-		$nameParts = $assignment.AssignmentName.Split("_")
-		# Take the last member of this array (ass opposed to the 3rd member), in case the app or collection name contain a "_"
-		$configTypeNameString = $nameParts[($nameParts.count - 1)]
-		
-		# Check that the two match
-		switch($configTypeNum) {
-			1 { $configTypeNumString = "Install" }
-			2 { $configTypeNumString = "Uninstall" }
-			Default { $configTypeNumString = "Invalid" }
+		# Only valid for apps, not TSes
+		if($assignment._DepType -eq "ts") {
+			$result = "TS"
 		}
-		$result = $configTypeNumString
-		if($configTypeNumString -ne $configTypeNameString) {
-			log "Assignment/App deployment disagrees with itself on its DesiredConfigType! DesiredConfigType is `"$configTypeNum`", while AssignmentName contains `"$configTypeNameString`"." -l 6
-			$result = "INVALID!"
+		else {
+			# DesiredConfigType is whether the app is deployed to "Install" (1), or Uninstall (2)
+			$configTypeNum = $assignment.DesiredConfigType
+			
+			# This is also encoded into the AssignmentName in the format "<app name>_<deployment collection name>_<DesiredConfigType string>"
+			$nameParts = $assignment.AssignmentName.Split("_")
+			# Take the last member of this array (ass opposed to the 3rd member), in case the app or collection name contain a "_"
+			$configTypeNameString = $nameParts[($nameParts.count - 1)]
+			
+			# Check that the two match
+			switch($configTypeNum) {
+				1 { $configTypeNumString = "Install" }
+				2 { $configTypeNumString = "Uninstall" }
+				Default { $configTypeNumString = "Invalid" }
+			}
+			$result = $configTypeNumString
+			if($configTypeNumString -ne $configTypeNameString) {
+				log "Assignment/App deployment disagrees with itself on its DesiredConfigType! DesiredConfigType is `"$configTypeNum`", while AssignmentName contains `"$configTypeNameString`"." -l 6
+				$result = "INVALID!"
+			}
 		}
 		
 		$assignment | Add-Member -NotePropertyName "_DesiredConfigType" -NotePropertyValue $result
@@ -764,10 +770,10 @@ function Compare-AssignmentRevisions {
 	function Get-AssignmentApplication($assignment) {
 		log "Getting application associated with assignment..." -l 5 -v 2
 		
-		
+		$genericModelName = $assignment._ModelName -replace "RequiredApplication","Application"
+		$genericModelName = $assignment._ModelName -replace "ProhibitedApplication","Application"
+			
 		if($DisableCaching) {
-			$genericModelName = $assignment._ModelName -replace "RequiredApplication","Application"
-			$genericModelName = $assignment._ModelName -replace "ProhibitedApplication","Application"
 			$app = Get-CMApplication -Fast -ModelName $genericModelName
 			if($app) {
 				log "Retrieved application." -l 6 -v 2
@@ -778,7 +784,7 @@ function Compare-AssignmentRevisions {
 			}
 		}
 		else {
-			$app = Get-CachedItem "app" $assignment._ModelName
+			$app = Get-CachedItem "app" $genericModelName
 		}
 		
 		log "Done getting application associated with assignment." -l 5 -v 2
