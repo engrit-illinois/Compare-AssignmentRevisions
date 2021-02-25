@@ -533,9 +533,9 @@ function Compare-AssignmentRevisions {
 	
 	# This is actually used for both Parse-Assignment and Parse-AssignmentAppDeployment
 	function Parse-DesiredConfigType($assignment) {
-		log "Parsing DesiredConfigType for assignment..." -v 2
+		log "Parsing DesiredConfigType for assignment..." -l 6 -v 2
 		
-		log "Deployment type: `"$($assignment._DepType)`"" -v 3
+		log "Deployment type: `"$($assignment._DepType)`"" -l 7 -v 3
 		# Only valid for apps, not TSes
 		if($assignment._DepType -eq "ts") {
 			$result = "TS"
@@ -543,10 +543,10 @@ function Compare-AssignmentRevisions {
 		else {
 			# DesiredConfigType is whether the app is deployed to "Install" (1), or Uninstall (2)
 			$configTypeNum = $assignment.DesiredConfigType
-			log "DesiredConfigType: `"$configTypeNum`"" -v 3
+			log "DesiredConfigType: `"$configTypeNum`"" -l 7 -v 3
 			
 			# This is also encoded into the AssignmentName in the format "<app name>_<deployment collection name>_<DesiredConfigType string>"
-			log "AssignmentName: `"$($assignment.AssignmentName)`"" -v 3
+			log "AssignmentName: `"$($assignment.AssignmentName)`"" -l 7 -v 3
 			$nameParts = $assignment.AssignmentName.Split("_")
 			# Take the last member of this array (ass opposed to the 3rd member), in case the app or collection name contain a "_"
 			$configTypeNameString = $nameParts[($nameParts.count - 1)]
@@ -632,7 +632,7 @@ function Compare-AssignmentRevisions {
 		
 		$assignment = Compare-Revisions $assignment
 		$assignment = Compare-ModelNames $assignment
-		$assignment = Compare-DesiredConfigTypes $assignment
+		$assignment = Compare-DesiredConfigType $assignment
 		
 		log "Done parsing assignment." -l 5 -v 2
 		$assignment
