@@ -637,7 +637,7 @@ function Compare-AssignmentRevisions {
 		
 		$assignment = Compare-Revisions $assignment
 		$assignment = Compare-ModelNames $assignment
-		$assignment = Compare-DesiredConfigType $assignment
+		$assignment = Compare-DesiredConfigTypes $assignment
 		
 		log "Done parsing assignment." -l 5 -v 2
 		$assignment
