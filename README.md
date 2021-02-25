@@ -258,7 +258,7 @@ Sources #1-#5 generally attempt a `Get-CIMInstance` query first, and fall back o
     - `Source #2`: CIM/WMI query to the local machine for the Powershell version info.
         - `Invoke-Command -ComputerName $compName -Scriptblock { $PSVersionTable.PSVersion }`
         - or WMI query for registry value of `SOFTWARE\Microsoft\PowerShell\3\PowerShellEngine\PowerShellVersion`
-		- Note: There is no Get-CIMInstance version for this source (couldn't find one that worked), so specifying `-DisableCIMFallbacks` will result in this value being empty.
+		- Note: There is no Get-CIMInstance implementation for this source (couldn't find one that worked), so specifying `-DisableCIMFallbacks` will result in this value being empty.
     - `Source #3`: CIM/WMI query to the local machine for the OS version info.
         - `Get-CIMInstance -ComputerName $compName -Class "Win32_OperatingSystem"`
         - or `Invoke-Command -ComputerName $compName -ErrorAction Stop -Scriptblock { [Environment]::OSVersion.Version }`
