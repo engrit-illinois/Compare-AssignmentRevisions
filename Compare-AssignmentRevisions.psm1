@@ -1183,8 +1183,14 @@ function Compare-AssignmentRevisions {
 		
 		$compNames
 	}
-
+	
+	function Get-RunTime($startTime) {
+		New-Timespan -Start $startTime -End (Get-Date)
+	}
+	
 	function Do-Stuff {
+		$startTime = Get-Date
+		
 		log " " -nots
 		
 		$myPWD = $pwd.path
@@ -1198,6 +1204,8 @@ function Compare-AssignmentRevisions {
 		
 		Set-Location $myPWD
 		
+		$runTime = Get-RunTime $startTime
+		log "Runtime: $runTime"
 		log "EOF"
 		log " " -nots
 	}
