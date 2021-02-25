@@ -539,7 +539,7 @@ function Compare-AssignmentRevisions {
 		# This is also encoded into the AssignmentName in the format "<app name>_<deployment collection name>_<DesiredConfigType string>"
 		$nameParts = $assignment.AssignmentName.Split("_")
 		# Take the last member of this array (ass opposed to the 3rd member), in case the app or collection name contain a "_"
-		$configTypeNameString = $nameParts.count - 1
+		$configTypeNameString = $nameParts[($nameParts.count - 1)]
 		
 		# Check that the two match
 		switch($configTypeNum) {
