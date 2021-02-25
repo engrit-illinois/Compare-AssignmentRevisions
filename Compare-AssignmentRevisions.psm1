@@ -709,6 +709,8 @@ function Compare-AssignmentRevisions {
 		$deployment | Add-Member -NotePropertyName "_Revision" -NotePropertyValue "TS"
 		$deployment | Add-Member -NotePropertyName "_ModelName" -NotePropertyValue "No ModelName. This is a TS deployment."
 		
+		$deployment = Parse-DesiredConfigType $deployment
+		
 		log "Done parsing TS deployment." -l 6 -v 2
 		$deployment
 	}
