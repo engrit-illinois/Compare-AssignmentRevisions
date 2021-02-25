@@ -549,7 +549,7 @@ function Compare-AssignmentRevisions {
 		}
 		$result = $configTypeNumString
 		if($configTypeNumString -ne $configTypeNameString) {
-			log ""
+			log "Assignment/App deployment disagrees with itself on its DesiredConfigType! DesiredConfigType is `"$configTypeNum`", while AssignmentName contains `"$configTypeNameString`"." -l 6
 			$result = "INVALID!"
 		}
 		
