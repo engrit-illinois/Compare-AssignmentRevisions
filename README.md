@@ -234,13 +234,14 @@ Fields output to the CSV are documented below. The table output to the screen co
 - `ApplicationName`: Source #10. The friendly name of the app.
 - `AsConfigType`: Source #6. The "DesiredConfigType" as stored by the assignment (i.e. whether the associated deployment is meant to be an `Install`, or an `Uninstall`). This is stored in two locations. If for some reason they don't match this will be `INVALID!`.
 - `AsConfigType`: Source #7. The "DesiredConfigType" as stored by the deployment object (i.e. whether the deployment is meant to be an `Install`, or an `Uninstall`). This is stored in two locations. If for some reason they don't match this will be `INVALID!`.
+- `ConfigTypesMatch`: Calculated. If the 2 ConfigType values (above) match, the value is `yes`. If they don't, the value is `MISMATCH!`.
 - `AsRev1`: Source #6. The revision of the app, as stored by the assignment.
 - `AsRev2`: Source #6. The revision is stored in the assignment in two places, so I'm capturing both. However I've never seen an instance where these two differ within the same assignment.
 - `DepRev`: Source #7. The revision of the app, as stored by the deployment object.
 - `AppRev1`: Source #10. The revision of the app, as stored by the applicaiton object.
 - `AppRev2`: Source #10. The revision is stored in the application object in two places, so I'm capturing both. However I've never seen an instance where these two differ within the same application object.
 - `RevsMatch`: Calculated. If all 5 revisions (above) match, the value is `yes`. If they don't, the value is `MISMATCH!`. This field is the raison d'etre for this script.
-- `ModelsMatch`: Calulated. If all 5 ModelNames (below) match, the value is `yes`. If they don't, the value is `MISMATCH!`.
+- `ModelsMatch`: Calculated. If all 5 ModelNames (below) match, the value is `yes`. If they don't, the value is `MISMATCH!`.
 - `AsModel1`: Source #6. The `ModelName` of the app, as stored by the assignment.
 - `AsModel2`: Source #6. The `ModelName` is stored in the assignment in two places, so I'm capturing both. However I've never seen an instance where these two differ within the same assignment.
 - `DepModel`: Source #7. The `ModelName` of the app, as stored by the deployment object.
