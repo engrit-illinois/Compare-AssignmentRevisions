@@ -986,33 +986,17 @@ function Compare-AssignmentRevisions {
 			}
 		}
 		elseif($assignment._DepType -eq "app") {
-			if($assignment._DesiredConfigType -eq "Uninstall") {
-				if(
-					($as1 -eq $as2) -and
-					($as2 -eq $dep) -and
-					($dep -eq $app1) -and
-					($app1 -eq $app2)
-				) {
-					$same = "yes"
-					log "Revisions match." -nots -v 1
-				}
-				else {
-					log "REVISIONS DO NOT MATCH!" -nots -v 1
-				}
+			if(
+				($as1 -eq $as2) -and
+				($as2 -eq $dep) -and
+				($dep -eq $app1) -and
+				($app1 -eq $app2)
+			) {
+				$same = "yes"
+				log "Revisions match." -nots -v 1
 			}
 			else {
-				if(
-					($as1 -eq $as2) -and
-					($as2 -eq $dep) -and
-					($dep -eq $app1) -and
-					($app1 -eq $app2)
-				) {
-					$same = "yes"
-					log "Revisions match." -nots -v 1
-				}
-				else {
-					log "REVISIONS DO NOT MATCH!" -nots -v 1
-				}
+				log "REVISIONS DO NOT MATCH!" -nots -v 1
 			}
 		}
 		else {
