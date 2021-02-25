@@ -520,38 +520,7 @@ function Compare-AssignmentRevisions {
 			$assignment | Add-Member -NotePropertyName "_Model" -NotePropertyValue $comp.Model
 			
 			if($assignment.AssignmentID -ne "Dummy assignment") {
-			
-				# Assignments with AssignmentID's of the format "DEP-MP######-<ModelName>" refer to apps in deployed task sequences
-				$asNameID = $assignment.AssignmentID
-				if($assignment.AssignmentID.StartsWith("DEP-MP")) {
-					$type = "ts"
-					log "Assignment is for an app in a task sequence." -l 5 -v 2
-					log "Assignment name: TS assignments have blank assignment names." -l 5 -v 2
-				}
-				else {
-					$type = "app"
-					log "Assignment is for a directly deployed app." -l 5 -v 2
-					log "Assignment name: `"$($assignment.AssignmentName)`"." -l 5 -v 2
-				}
-				$assignment | Add-Member -NotePropertyName "_DepType" -NotePropertyValue $type
-				
 				$assignment = Parse-Assignment $assignment
-				
-				$deployment = Get-AssignmentDeployment $assignment
-				$assignment | Add-Member -NotePropertyName "_Deployment" -NotePropertyValue $deployment
-				
-				if($assignment._DepType -eq "ts") {
-					$assignment | Add-Member -NotePropertyName "_Name" -NotePropertyValue "No assignment name. This is a TS assignment."
-				}
-				else {
-					$assignment | Add-Member -NotePropertyName "_Name" -NotePropertyValue $assignment.AssignmentName
-				}
-				
-				$application = Get-AssignmentApplication $assignment
-				$assignment | Add-Member -NotePropertyName "_Application" -NotePropertyValue $application
-				
-				$assignment = Compare-Revisions $assignment
-				$assignment = Compare-ModelNames $assignment
 			}
 			
 			log "Done processing assignment with ID: `"$($assignment.AssignmentID)`"..." -l 4 -v 2
@@ -562,9 +531,34 @@ function Compare-AssignmentRevisions {
 		$comp
 	}
 	
-	function Parse-Assignment($assignment) {
-		log "Parsing assignment..." -l 5 -v 1
+	# This is actually used for both Parse-Assignment and Parse-AssignmentAppDeployment
+	function Parse-DesiredConfigTypeString($assignment) {
+		# DesiredConfigType is whether the app is deployed to "Install" (1), or Uninstall (2)
+		$configTypeNum = $assignment.DesiredConfigType
 		
+		# This is also encoded into the AssignmentName in the format "<app name>_<deployment collection name>_<DesiredConfigType string>"
+		$nameParts = $assignment.AssignmentName.Split("_")
+		# Take the last member of this array (ass opposed to the 3rd member), in case the app or collection name contain a "_"
+		$configTypeNameString = $nameParts.count - 1
+		
+		# Check that the two match
+		switch($configTypeNum) {
+			1 { $configTypeNumString = "Install" }
+			2 { $configTypeNumString = "Uninstall" }
+			Default { $configTypeNumString = "Invalid" }
+		}
+		$result = $configTypeNumString
+		if($configTypeNumString -ne $configTypeNameString) {
+			log ""
+			$result = "INVALID!"
+		}
+		
+		$assignment | Add-Member -NotePropertyName "_DesiredConfigType" -NotePropertyValue $result
+		
+		$assignment
+	}
+	
+	function Parse-AssignmentCIs($assignment) {
 		if($assignment.AssignedCIs) {
 			# CI data is in XML format, translate into object and save
 			# https://stackoverflow.com/questions/3935395/loading-xml-string-with-powershell
@@ -585,15 +579,48 @@ function Compare-AssignmentRevisions {
 			log "Assignment is missing AssignedCIs field!" -l 6
 		}
 		
-		# If this is for a TS app, extract the TS deployment ID
-		if($assignment._DepType -eq "ts") {
+		$assignment
+	}
+	
+	function Parse-AssignmentDeploymentType($assignment) {
+		# Assignments with AssignmentID's of the format "DEP-MP######-<ModelName>" refer to apps in deployed task sequences
+		$asNameID = $assignment.AssignmentID
+		if($assignment.AssignmentID.StartsWith("DEP-MP")) {
+			$type = "ts"
+			log "Assignment is for an app in a task sequence." -l 5 -v 2
+			log "Assignment name: TS assignments have blank assignment names." -l 5 -v 2
+			# If this is for a TS app, extract the TS deployment ID
 			# In this case, the assignment ID is of the format "DEP-<ts deployment id>-<ModelName>"
 			# The TS deployment id is of the format "MP######"
 			# In a TaskSequenceDeployment object, this is called the "AdvertisementID".
 			$asIDParts = $assignment.AssignmentID.Split("-")
 			$tsDepID = $asIDParts[1]
 			$assignment | Add-Member -NotePropertyName "_TSDepID" -NotePropertyValue $tsDepID
+			$name = "No assignment name. This is a TS assignment."
 		}
+		else {
+			$type = "app"
+			log "Assignment is for a directly deployed app." -l 5 -v 2
+			log "Assignment name: `"$($assignment.AssignmentName)`"." -l 5 -v 2
+			$name = $assignment.AssignmentName
+		}
+		$assignment | Add-Member -NotePropertyName "_DepType" -NotePropertyValue $type
+		$assignment | Add-Member -NotePropertyName "_Name" -NotePropertyValue $name
+		
+		$assignment
+	}
+	
+	function Parse-Assignment($assignment) {
+		log "Parsing assignment..." -l 5 -v 1
+		
+		$assignment = Parse-AssignmentDeploymentType $assignment
+		$assignment = Parse-AssignmentCIs $assignment
+		$assignment = Parse-DesiredConfigTypeString $assignment
+		$assignment = Get-AssignmentDeployment $assignment
+		$assignment = Get-AssignmentApplication $assignment
+		
+		$assignment = Compare-Revisions $assignment
+		$assignment = Compare-ModelNames $assignment
 		
 		log "Done parsing assignment." -l 5 -v 2
 		$assignment
@@ -606,7 +633,8 @@ function Compare-AssignmentRevisions {
 		else {
 			$deployment = Get-AssignmentAppDeployment $assignment
 		}
-		$deployment
+		$assignment | Add-Member -NotePropertyName "_Deployment" -NotePropertyValue $deployment
+		$assignment
 	}
 	
 	function Get-AssignmentTSDeployment($assignment) {
@@ -725,6 +753,8 @@ function Compare-AssignmentRevisions {
 		$depModelName = $depCiidParts[0] + "/" + $depCiidParts[1]
 		$deployment | Add-Member -NotePropertyName "_ModelName" -NotePropertyValue $depModelName
 		
+		$deployment = Parse-DesiredConfigTypeString $deployment
+		
 		log "Done parsing app deployment." -l 6 -v 2
 		$deployment
 	}
@@ -749,7 +779,10 @@ function Compare-AssignmentRevisions {
 		}
 		
 		log "Done getting application associated with assignment." -l 5 -v 2
-		$app
+		
+		$assignment | Add-Member -NotePropertyName "_Application" -NotePropertyValue $app
+		
+		$assignment
 	}
 
 	# Parse application for this assignment
@@ -1037,7 +1070,7 @@ function Compare-AssignmentRevisions {
 		# Make CSV file and add header row if file doesn't exist
 		if(!(Test-Path -PathType leaf -Path $CSVPATH)) {
 			$shutup = New-Item -ItemType File -Force -Path $CSVPATH
-			line "Computer,ClientVer,PSVer,OSVer,Make,Model,AssignmentID,AssignmentName,DeploymentName,DeploymentCollection,DeploymentContent,ApplicationName,AsRev1,AsRev2,DepRev,AppRev1,AppRev2,RevsMatch,ModelsMatch,AsModel1,AsModel2,DepModel1,AppModel1,AppModel2"
+			line "Computer,ClientVer,PSVer,OSVer,Make,Model,AssignmentID,AssignmentName,DeploymentName,DeploymentCollection,DeploymentContent,ApplicationName,AsConfigType,DepConfigType,AsRev1,AsRev2,DepRev,AppRev1,AppRev2,RevsMatch,ModelsMatch,AsModel1,AsModel2,DepModel1,AppModel1,AppModel2"
 		}
 		
 		$line = "`"" + $assignment._Computer + "`"," +
@@ -1052,6 +1085,8 @@ function Compare-AssignmentRevisions {
 			"`"" + $assignment._Deployment._Collection + "`"," +
 			"`"" + $assignment._Deployment._ContentName + "`"," +
 			"`"" + $assignment._Application.LocalizedDisplayName + "`"," +
+			"`"" + $assignment._Application._DesiredConfigType + "`"," +
+			"`"" + $assignment._Deployment._DesiredConfigType + "`"," +
 			"`"" + $assignment._Revision + "`"," +
 			"`"" + $assignment._CI.CIVersion + "`"," +
 			"`"" + $assignment._Deployment._Revision + "`"," +
