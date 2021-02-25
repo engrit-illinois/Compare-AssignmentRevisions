@@ -1085,7 +1085,7 @@ function Compare-AssignmentRevisions {
 			"`"" + $assignment._Deployment._Collection + "`"," +
 			"`"" + $assignment._Deployment._ContentName + "`"," +
 			"`"" + $assignment._Application.LocalizedDisplayName + "`"," +
-			"`"" + $assignment._Application._DesiredConfigType + "`"," +
+			"`"" + $assignment._DesiredConfigType + "`"," +
 			"`"" + $assignment._Deployment._DesiredConfigType + "`"," +
 			"`"" + $assignment._Revision + "`"," +
 			"`"" + $assignment._CI.CIVersion + "`"," +
