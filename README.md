@@ -29,12 +29,8 @@ Much of this script is based on knowledge about problems and bugs with SCCM docu
 If any of the last three prerequisites aren't met, the script will fail to poll various data for the relevant machine, and will move on to the next.  
 
 ### Instructions
-1. Download and save `Compare-AssignmentRevisions.psm1`.
-2. Open a Powershell prompt.
-3. Import the module:
-    1. `cd c:\path\to\script`
-    2. `Import-Module .\Compare-AssignmentRevisions.psm1`
-4. Run the module:
+1. Download `Compare-AssignmentRevisions.psm1` to `$HOME\Documents\WindowsPowerShell\Modules\Compare-AssignmentRevisions\Compare-AssignmentRevisions.psm1`
+2. Run it, e.g.:
     - `Compare-AssignmentRevisions -SiteCode "MP0" -Provider "sccmcas.company.com" -Collection "Collection Name"`
     - `Compare-AssignmentRevisions -SiteCode "MP0" -Provider "sccmcas.company.com" -Computers "computer-name-01"`
     - `Compare-AssignmentRevisions -SiteCode "MP0" -Provider "sccmcas.company.com" -Computers "computer-name-01","computer-name-02","computer-name-03"`
