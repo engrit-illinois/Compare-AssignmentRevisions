@@ -62,7 +62,7 @@ For more in-depth troubleshooting, see the [Technical details](#technical-detail
 
 Note: Don't open the CSV file in Excel until the script is done, because Excel will lock the file and prevent the script from writing to it.  
 In this case, the script will simply fail to write (attempted after processing each computer) and will continue on.  
-If you want to check on progress using Excel before the script is done, make a copy of the CSV.  
+If you want to check on progress using Excel before the script is done, make a copy of the CSV and open that instead.  
 
 # Remediation
 This script performs no actual actions on computers.  
@@ -70,15 +70,15 @@ It's sole purpose is to gather data for use in diagnosing where problems exist, 
 
 I'm not an expert on this (somehow), but it seems that there are various actions that can be taken to fix revision issues.  
 I don't necessarily prescribe any particular procedure, but one or more of the following actions have been reported to work in various cases.  
-In order of SCCM heirarchy:  
+In order of SCCM hierarchy:  
 - Edit an app's deployment type and redistribute the app
 - Delete and re-create a deployment
 - Reinstall the client on an affected machine
 - Push policy to an affected machine
 - Run scripts (suggested in the technet threads linked above) to force evaluation of assignments on an affected machine
-    - These remediation scripts/commands could potentially be mass deployed via SCCM
+    - These remediation scripts/commands could potentially be mass-deployed via SCCM
 
-In ideal cases, one of the first two actions may solve the problem across all affected machines, unless they have further local issues (such as an unhealthy client).
+In ideal cases, one of the first two actions may solve the problem across all affected machines, unless they also have further local issues (such as an unhealthy client).
 
 # Parameters
 
@@ -111,7 +111,7 @@ For comparison, a scan of 1200+ machines that took ~24 hours without caching, to
 The side effect of caching is that any changes made to relevant SCCM objects while the script is running won't be reflected in the script's logic and output.  
 However this is probably irrelevant in almost all scenarios.  
 If data changes in SCCM while the script is running that would make the output very confusing and much less valuable.  
-Optional non-caching behavior was left in mostly because this was originally the default behavior of the script before adding caching.  
+Optional non-caching behavior was left in mostly because this was originally the default behavior of the script before caching was added.  
 
 ### -ComputerInfoOnly
 Skips gathering information about local applications/assignments, deployments, collections, and applications.  
@@ -141,13 +141,13 @@ Using a value greater than `0` will result in a very large log file when scannin
 - `0`: Default value. Outputs minimal information once per computer.  
 - `1`: Outputs minimal information once per assignment.  
 - `2`: Outputs most steps taken for every assignment, several of the values gathered, and outputs when each step is done.  
-- `3`: Misc debug/test output
+- `3`: Misc. debug/test output.
 
 
 ### -CIMTimeoutSec
 Optional integer. Specifies the number of seconds to wait when polling a machine for data via CIM before timing out and moving on.  
 Default value is `10`.  
-More specifically, machines are pinged first to ensure connectivity. This value relates to CIM calls made to machines that are found to be online.  
+Machines are always pinged first to ensure connectivity. This value relates to CIM calls made to machines where the ping was successful.  
 Common reasons an online machine might not respond to a CIM call are:  
 - The user running Powershell doesn't have appropriate permissions
 - WinRM and/or the firewall are not configured properly on the machine
@@ -163,7 +163,7 @@ These fallback queries are usually WMI queries, or `Invoke-Command` calls.
 Using fallbacks will improve reliability of data gathering in mixed environments with various Powershell and OS versions.  
 However note that WMI queries used as fallbacks can sometimes hang due to problems on the remote computer being queried.  
 This can cause the script to stall indefinitely, because there is no built-in method for timing out hung WIM queries.  
-Unfortunately it's not trivial to timeout a `Get-WMIObject` query, like it is using the `-OperationTimeoutSec` parameter of `Get-CIMInstance`.  
+Unfortunately, unlike `Get-CIMInstance` (which has a built-in `-OperationTimeoutSec` parameter), it's not trivial to timeout a `Get-WMIObject` query.  
 Update: The script now uses background jobs to run Invoke-Command and Get-WMIObject calls, which allows for timeouts to avoid these hangs. See new timeout and fallback parameters below.  
 
 ### -DisableCIM
@@ -177,7 +177,7 @@ If specified, the script skips attempting to query computers using `Invoke-Comma
 ### -DisableWMI
 Optional switch.  
 If specified, the script skips attempting to query computers using `Get-WMIObject` (if it falls back this far).  
-Note: it is possible (but pointless) to disable all three query methods.  
+Note: it is possible to disable all three query methods, but this would be pointless.  
 
 ### -ICTimeoutSec
 Optional integer.  
@@ -192,7 +192,7 @@ Default value is `10`.
 
 
 # Technical details
-Below are details notes about how the script works and how the various types and sources of data it uses are structured and gathered.  
+Below are detailed notes about how the script works and how the various types and sources of data it uses are structured and gathered.  
 
 Note: I'll use the following terminology below:  
 - "Direct apps": apps which are assigned to a machine because they are directly deployed to a collection containing that machine.
@@ -205,17 +205,17 @@ To summarize the procedure of the script:
 - Build list of computer names
 - For each computer:
     - Pull SCCM client version, Powershell version, OS version, and Make/Model
-    - Pull locally stored applications (not doing anything with these yet)
+    - Pull locally stored applications (not doing anything with these yet, as they don't seem to contain any relevant information)
     - Pull locally stored assignments
     - For each assignment:
         - Pull associated deployment
         - Pull associated app
         - Compare revisions of assignment, deployment, and app
         - Append list of assignments (with all relevant data) to CSV
-- Output list of assignments to screen (if its not insanely long)
+- Output list of assignments to screen (if it's not insanely long)
 
 ### Output fields
-Fields output to the CSV are documented below. The table output to the screen contains fewer fields (so it fits on the screen), omitting the less important ones.
+Fields output to the CSV are documented below. The source for each field is noted. The sources are documented below. The final table output to the screen contains fewer fields (so it fits on the screen), omitting the less important ones.
 - `Computer`: Given. Computer name.
 - `ClientVer`: Source #1. SCCM client version.
 - `PSVer`: Source #2. Powershell verison.
@@ -295,8 +295,12 @@ Field formatting notes are documented below. `#` is used to represent a hexideci
         - So `AssignmentName` is given a filler value in the CSV output so it can be distinguished from entries which are actually missing this value.
 - `DeploymentName`
     - Direct apps use the same format as the `Assignment ID`
-    - TS apps use the format `<TS name>_<TS package ID>_<collection>`, where `<collection>` is the collection to which the TS is deployed, and `<TS name>` and `<collection>` are stored with whitespace (i.e. spaces) stripped out for some reason.
-- `*Rev#`: A revision is always an integer.
+    - TS apps use the format `<TS name>_<TS package ID>_<collection>`, where `<collection>` is the collection to which the TS is deployed.
+    - `<TS name>` and `<collection>` are stored with whitespace (i.e. spaces) stripped out for some reason.
+- `*Rev#`
+    - A revision is always an integer.
+    - In Assignment and App objects, the revision is stored twice. Both instances are collected and checked just to make sure they match, however the author has never seen a mismatch within a given object.
+    - e.g. `AsRev1`, `AsRev2`, `DepRev`, `AppRev1`, `AppRev2`.
     - TS app deployments do not store a revision (because the deployment is for a TS and not an app, and TSes do not have revisions).
         - So `DepRev` is given a filler value of `TS` in the CSV output, and is not considered during the calculation of `RevsMatch`.
 - `*Model#`
@@ -304,9 +308,11 @@ Field formatting notes are documented below. `#` is used to represent a hexideci
         - `ScopeID_########-####-####-####-############/Application_########-####-####-####-############`
         - `ScopeID_########-####-####-####-############/RequiredApplication_########-####-####-####-############`
     - App information stored in assignments and deployments may use either format, depending on whether the associated app is deployed as `Available` or `Required`.
-        - Application obejcts themselves will always be of the first format.
+        - Application objects themselves will always be of the first format.
     - In the author's environment, in almost all cases, the `ScopeID` was always the same: `ScopeId_209059C8-4AC8-44C6-803C-9B729BCFE00B`.
         - The only exceptions were 3 apps which had a different ScopeID: `ScopeId_8001C6D6-2B7E-43D3-ABAB-D629FBE7FB44`.
+    - e.g. `AsModel1`, `AsModel2`, `DepModel`, `AppModel1`, `AppModel2`.
+    - In Assignment and App objects, the ModelName is stored twice. Both instances are collected and checked just to make sure they match, however the author has never seen a mismatch within a given object.
 
 # Notes
 - Script built and tested with SCCM CB 1910, with Powershell 5.1.
