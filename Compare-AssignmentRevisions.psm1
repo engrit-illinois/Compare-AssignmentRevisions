@@ -1113,7 +1113,7 @@ function Compare-AssignmentRevisions {
 		# Make CSV file and add header row if file doesn't exist
 		if(!(Test-Path -PathType leaf -Path $CSVPATH)) {
 			$shutup = New-Item -ItemType File -Force -Path $CSVPATH
-			line "Computer,ClientVer,PSVer,OSVer,Make,Model,AssignmentID,AssignmentName,DeploymentName,DeploymentCollection,DeploymentContent,ApplicationName,AsConfigType,DepConfigType,ConfigTypesMatch,AsRev1,AsRev2,DepRev,AppRev1,AppRev2,RevsMatch,ModelsMatch,AsModel1,AsModel2,DepModel1,AppModel1,AppModel2"
+			line "Computer,ClientVer,PSVer,OSVer,Make,Model,AssignmentID,AssignmentName,DeploymentName,DeploymentCollection,DeploymentContent,ApplicationName,AsConfigType,DepConfigType,ConfigTypesMatch,AsRev1,AsRev2,DepRev,AppRev1,AppRev2,RevsMatch,ModelsMatch,AsModel1,AsModel2,DepModel,AppModel1,AppModel2"
 		}
 		
 		$line = "`"" + $assignment._Computer + "`"," +
