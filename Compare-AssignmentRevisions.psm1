@@ -564,8 +564,39 @@ function Compare-AssignmentRevisions {
 			}
 			$result = $configTypeNumString
 			if($configTypeNumString -ne $configTypeNameString) {
-				log "Assignment/App deployment disagrees with itself on its DesiredConfigType! DesiredConfigType is `"$configTypeNum`", while AssignmentName contains `"$configTypeNameString`"." -l 6
+				log "Assignment/App deployment disagrees with itself on its DesiredConfigType! DesiredConfigType is `"$configTypeNum`", while AssignmentName contains `"$configTypeNameString`"." -l 6 -v 2
 				$result = "INVALID!"
+				
+				log "Checking if this assignment is for a previous deployment with implicit uninstall configured..." -l 7 -v 2
+				
+				# In cases where the deployment has "implicit uninstall" configured, the AssignmentName is blank
+				# Check if this is the case
+				
+				# Get deployment's AdditionalProperties
+				$dep = Get-CachedItem "appdep" ($assignment.AssignmentID -replace "/Uninstall","")
+				
+				# AdditionalProperties is in XML format, translate into object and save
+				# https://stackoverflow.com/questions/3935395/loading-xml-string-with-powershell
+				if($dep.AdditionalProperties -and ($dep.AdditionalProperties -ne "")) {
+					$propsXmlObject = New-Object -TypeName System.Xml.XmlDocument
+					$propsXmlObject.LoadXml($dep.AdditionalProperties)
+				}
+				
+				$implicitUninstallValue = $propsXmlObject.Properties.ImplicitUninstallEnabled
+				if($implicitUninstallValue) {
+					log "ImplicitUninstallEnabled: `"$implicitUninstallValue`"." -l 8 -v 2
+					
+					if($implicitUninstallValue -eq "true") {
+						$result = "ImplicitUninstall"
+					}
+				}
+				
+				if($result -eq "ImplicitUninstall") {
+					log "Assignment appears to be for a previous deployment with implicit uninstall configured." -l 8 -v 2
+				}
+				else {
+					log "Assignment does not appear to be for a previous deployment with implicit uninstall configured." -l 8 -v 2
+				}
 			}
 		}
 		
@@ -730,7 +761,7 @@ function Compare-AssignmentRevisions {
 		# The specific deployment for this assignment can be pulled using the assignmentID
 		
 		if($DisableCaching) {
-			$deployment = Get-CMApplicationDeployment -AssignmentUniqueID $assignment.AssignmentID
+			$deployment = Get-CMApplicationDeployment -AssignmentUniqueID ($assignment.AssignmentID -replace "/Uninstall","")
 			
 			if($deployment) {
 				log "Retrieved app deployment." -l 6 -v 2
@@ -741,7 +772,7 @@ function Compare-AssignmentRevisions {
 			}
 		}
 		else {
-			$deployment = Get-CachedItem "appdep" $assignment.AssignmentID
+			$deployment = Get-CachedItem "appdep" ($assignment.AssignmentID -replace "/Uninstall","")
 		}
 		
 		log "Done getting app deployment associated with assignment..." -l 5 -v 2
