@@ -108,6 +108,19 @@ function Compare-AssignmentRevisions {
 			log "$($e.InvocationInfo.PositionMessage.Split("`n")[0])" -l 5
 		}
 	}
+	
+	# Because of Powershell's weird way of handling arrays containing null values
+	# i.e. null values in arrays still count as items in the array
+	function count($array) {
+		$count = 0
+		if($array) {
+			# If we didn't check $array in the above if statement, this would return 1 if $array was $null
+			# i.e. @().count = 0, @($null).count = 1
+			$count = @($array).count
+			# We can't simply do $array.count, because if it's null, that would throw an error due to trying to access a method on a null object
+		}
+		$count
+	}
 
 	function Prep-SCCM {
 		log "Preparing connection to SCCM..."
@@ -143,8 +156,8 @@ function Compare-AssignmentRevisions {
 				"OSVersion" = $null
 				"Make" = $null
 				"Model" = $null
-				"localassignments" = @()
 				"localapplications" = @()
+				"localassignments" = @()
 				"skip" = $false
 			}
 			$thisCompObject = New-Object PSObject -Property $thisCompHash
@@ -345,7 +358,7 @@ function Compare-AssignmentRevisions {
 					break
 				}
 			}
-			
+				
 			if(
 				($dataType -eq "LocalAssignments") -and
 				($ComputerInfoOnly)
@@ -374,6 +387,7 @@ function Compare-AssignmentRevisions {
 					(!$comp.skip)
 				) {
 					$lastMethod = "Invoke-Command"
+					$jobResult = $null
 					$jobResult = Query-AsJob -type "Invoke-Command" -compName $compname -scriptBlockString $scriptBlockStringIC
 					$result = $jobResult.result
 					$comp.skip = $jobResult.skip
@@ -387,9 +401,23 @@ function Compare-AssignmentRevisions {
 					(!$comp.skip)
 				) {
 					$lastMethod = "WMI"
+					$jobResult = $null
 					$jobResult = Query-AsJob -type "WMI" -compName $compname -scriptBlockString $scriptBlockStringWMI
 					$result = $jobResult.result
 					$comp.skip = $jobResult.skip
+				}
+				
+				# If nothing worked and this is the LocalAssignments, save a dummy assignment so we have something to dump the other info into
+				if(
+					($dataType -eq "LocalAssignments") -and
+					(!$result) -and
+					(!$comp.skip)
+				) {
+					log "Failed to retrieve local assignments. Saving one dummy assignment as a record for the CSV." -l 3 -v 1
+					$dummyAssignment = [PSCustomObject]@{
+						"AssignmentID" = "Failed to retrieve assignments!"
+					}
+					$result = @($dummyAssignment)
 				}
 			}
 	
@@ -453,13 +481,13 @@ function Compare-AssignmentRevisions {
 				
 				switch($dataType) {
 					"LocalApplications" {
-						log "Retrieved $($comp.localapplications.count) local applications." -l 3
+						log "Retrieved $(count $comp.localapplications) local applications." -l 3
 						
-						#$comp = Parse-Applications $comp
+						$comp = Parse-Applications $comp
 						break
 					}
 					"LocalAssignments" {
-						log "Retrieved $($comp.localassignments.count) local assignments." -l 3
+						log "Retrieved $(count $comp.localassignments) local assignments." -l 3
 						
 						$comp = Parse-Assignments $comp
 						break
@@ -552,9 +580,11 @@ function Compare-AssignmentRevisions {
 			
 			# This is also encoded into the AssignmentName in the format "<app name>_<deployment collection name>_<DesiredConfigType string>"
 			log "AssignmentName: `"$($assignment.AssignmentName)`"" -l 7 -v 3
-			$nameParts = $assignment.AssignmentName.Split("_")
-			# Take the last member of this array (ass opposed to the 3rd member), in case the app or collection name contain a "_"
-			$configTypeNameString = $nameParts[($nameParts.count - 1)]
+			if($assignment.AssignmentName) {
+				$nameParts = $assignment.AssignmentName.Split("_")
+				# Take the last member of this array (ass opposed to the 3rd member), in case the app or collection name contain a "_"
+				$configTypeNameString = $nameParts[($nameParts.count - 1)]
+			}
 			
 			# Check that the two match
 			switch($configTypeNum) {
@@ -623,7 +653,7 @@ function Compare-AssignmentRevisions {
 			$assignment | Add-Member -NotePropertyName "_ModelName" -NotePropertyValue $modelName
 		}
 		else {
-			log "Assignment is missing AssignedCIs field!" -l 6
+			log "Assignment is missing AssignedCIs field!" -l 6 -v 2
 		}
 		
 		$assignment
@@ -631,26 +661,32 @@ function Compare-AssignmentRevisions {
 	
 	function Parse-AssignmentDeploymentType($assignment) {
 		# Assignments with AssignmentID's of the format "DEP-MP######-<ModelName>" refer to apps in deployed task sequences
-		$asNameID = $assignment.AssignmentID
-		if($assignment.AssignmentID.StartsWith("DEP-MP")) {
-			$type = "ts"
-			log "Assignment is for an app in a task sequence." -l 5 -v 2
-			log "Assignment name: TS assignments have blank assignment names." -l 5 -v 2
-			# If this is for a TS app, extract the TS deployment ID
-			# In this case, the assignment ID is of the format "DEP-<ts deployment id>-<ModelName>"
-			# The TS deployment id is of the format "MP######"
-			# In a TaskSequenceDeployment object, this is called the "AdvertisementID".
-			$asIDParts = $assignment.AssignmentID.Split("-")
-			$tsDepID = $asIDParts[1]
-			$assignment | Add-Member -NotePropertyName "_TSDepID" -NotePropertyValue $tsDepID
-			$name = "No assignment name. This is a TS assignment."
+		$name = $assignment.AssignmentName
+		$type = "unknown"
+		
+		if($assignment.AssignmentID) {
+			if($assignment.AssignmentID.StartsWith("DEP-MP")) {
+				$type = "ts"
+				log "Assignment type: Assignment is for an app in a task sequence." -l 5 -v 2
+				# If this is for a TS app, extract the TS deployment ID
+				# In this case, the assignment ID is of the format "DEP-<ts deployment id>-<ModelName>"
+				# The TS deployment id is of the format "MP######"
+				# In a TaskSequenceDeployment object, this is called the "AdvertisementID".
+				$asIDParts = $assignment.AssignmentID.Split("-")
+				$tsDepID = $asIDParts[1]
+				$assignment | Add-Member -NotePropertyName "_TSDepID" -NotePropertyValue $tsDepID
+				$name = "No assignment name. This is a TS assignment."
+			}
+			else {
+				$type = "app"
+				log "Assignment type: Assignment is for a directly deployed app." -l 5 -v 2
+			}
 		}
 		else {
-			$type = "app"
-			log "Assignment is for a directly deployed app." -l 5 -v 2
-			log "Assignment name: `"$($assignment.AssignmentName)`"." -l 5 -v 2
-			$name = $assignment.AssignmentName
+			log "Assignment type: Assignment has no AssignmentID!" -l 5 -v 2
 		}
+		
+		log "Assignment name: `"$name`"." -l 5 -v 2
 		$assignment | Add-Member -NotePropertyName "_DepType" -NotePropertyValue $type
 		$assignment | Add-Member -NotePropertyName "_Name" -NotePropertyValue $name
 		
@@ -817,7 +853,9 @@ function Compare-AssignmentRevisions {
 		$genericModelName = $assignment._ModelName -replace "ProhibitedApplication","Application"
 			
 		if($DisableCaching) {
-			$app = Get-CMApplication -Fast -ModelName $genericModelName
+			if($genericModelName) {
+				$app = Get-CMApplication -Fast -ModelName $genericModelName
+			}
 			if($app) {
 				log "Retrieved application." -l 6 -v 2
 				$app = Parse-AssignmentApplication $app
@@ -885,7 +923,12 @@ function Compare-AssignmentRevisions {
 				$logType = "Application"
 				$idType = "ModelName"
 				$cacheVar = "CachedApplications"
-				$getCmd = "Get-CMApplication -$idType `"$id`""
+				if($id) {
+					$getCmd = "Get-CMApplication -$idType `"$id`""
+				}
+				else {
+					$getCmd = "log `"Skipping application retrieval because AssignmentID is null.`" -l 8 -v 2"
+				}
 				$parseCmd = "Parse-AssignmentApplication `$cachedItem"
 				break
 			}
