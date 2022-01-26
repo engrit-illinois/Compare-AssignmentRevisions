@@ -217,20 +217,21 @@ To summarize the procedure of the script:
 ### Output fields
 Fields output to the CSV are documented below. The source for each field is noted. The sources are documented below. The final table output to the screen contains fewer fields (so it fits on the screen), omitting the less important ones.
 - `Computer`: Given. Computer name.
+- `Error`: Blank unless an error occurred, such as the computer being unresponsive, or the script failing to retrieve a computer's assignments.
 - `ClientVer`: Source #1. SCCM client version.
 - `PSVer`: Source #2. Powershell verison.
 - `OSVer`: Source #3. OS version.
 - `Make`: Source #4. Manufacturer of system/mobo.
 - `Model`: Source #4. Make of system/mobo.
-- `AssignmentID`: Source #5. Unique ID of assignment. Matches 1:1 with a deployment.
+- `AssignmentID`: Source #5. Unique ID of assignment. Matches 1:1 with a deployment. Will contain `Dummy assignment` for computers where assignments could not be retrieved.
 - `AssignmentName`: Source #6. String representing an assignment's name. See formatting notes below.
 - `DeploymentName`: Source #7. String representing a deployment's name. See formatting notes below.
 - `DeploymentContent`: Source #7 (direct apps) or #6 (TS apps). String representing the app's name (direct apps) or the TS name (TS apps).
 - `DeploymentCollection`: Source #7 (direct apps) or #6 (TS apps). String representing the collection to which the app or TS is deployed.
 - `ApplicationName`: Source #10. The friendly name of the app.
 - `AsConfigType`: Source #6. The "DesiredConfigType" as stored by the assignment (i.e. whether the associated deployment is meant to be an `Install`, or an `Uninstall`). This is stored in two locations. If for some reason they don't match this will be `INVALID!`.
-- `AsConfigType`: Source #7. The "DesiredConfigType" as stored by the deployment object (i.e. whether the deployment is meant to be an `Install`, or an `Uninstall`). This is stored in two locations. If for some reason they don't match this will be `INVALID!`.
-- `ConfigTypesMatch`: Calculated. If the 2 ConfigType values (above) match, the value is `yes`. If they don't, the value is `MISMATCH!`.
+- `AsConfigType`: Source #7. The "DesiredConfigType" as stored by the deployment object (i.e. whether the deployment is meant to be an `Install`, or an `Uninstall`). May also be `ImplicitUninstall` for assignments relating to previous deployments which are configured with the implicit uninstall option. This is stored in two locations. If for some reason they don't match this will be `INVALID!`.
+- `ConfigTypesMatch`: Calculated. If the 2 ConfigType values (above) match, the value is `yes`. If they don't, the value is `MISMATCH!`. `MISMATCH!` is expected for when `AsConfigType` is `ImplicitUninstall`.
 - `AsRev1`: Source #6. The revision of the app, as stored by the assignment.
 - `AsRev2`: Source #6. The revision is stored in the assignment in two places, so I'm capturing both. However I've never seen an instance where these two differ within the same assignment.
 - `DepRev`: Source #7. The revision of the app, as stored by the deployment object.

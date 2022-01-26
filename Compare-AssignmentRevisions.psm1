@@ -151,6 +151,7 @@ function Compare-AssignmentRevisions {
 		foreach($thisComp in $comps) {
 			$thisCompHash = @{
 				"name" = $thisComp
+				"Error" = $null
 				"SCCMClientVersion" = $null
 				"PSVersion" = $null
 				"OSVersion" = $null
@@ -195,14 +196,20 @@ function Compare-AssignmentRevisions {
 				if(!$ComputerInfoOnly) {
 					# Never ended up doing anything with this localapplication info, so skip it to save on time and memory
 					#$comp = Get-Data "LocalApplications" $comp
-				}
 					
-				$comp = Get-Data "LocalAssignments" $comp
-				
-				Export-CompAssignments $comp
+					$comp = Get-Data "LocalAssignments" $comp
+				}
 			}
 			
-			# Once we've exported the data (if necessary), remove it so it doesn't eventually eat a bunch of memory when scanning many computers
+			# Never ended up doing anything with this localapplication info, so skip it to save on time and memory
+			#$comp = Parse-Applications $comp
+			
+			# Need to parse assignments regardless in case we have dummy assignments for when computers are unresponsive or don't return any assignments
+			$comp = Parse-Assignments $comp
+			
+			Export-CompAssignments $comp
+			
+			# Once we've exported the data, remove it so it doesn't eventually eat a bunch of memory when scanning many computers
 			log "Removing computer data to save memory." -l 2
 			$comp = $null
 			
@@ -363,7 +370,7 @@ function Compare-AssignmentRevisions {
 				($dataType -eq "LocalAssignments") -and
 				($ComputerInfoOnly)
 			) {
-				log "-ComputerInfoOnly was specified. Skipping gathering assignment data." -l 3
+				log "-ComputerInfoOnly was specified. Skipping gathering assignment data. Saving one dummy assignment as a record for the CSV." -l 3
 				$dummyAssignment = [PSCustomObject]@{
 					"AssignmentID" = "Dummy assignment"
 				}
@@ -415,7 +422,8 @@ function Compare-AssignmentRevisions {
 				) {
 					log "Failed to retrieve local assignments. Saving one dummy assignment as a record for the CSV." -l 3 -v 1
 					$dummyAssignment = [PSCustomObject]@{
-						"AssignmentID" = "Failed to retrieve assignments!"
+						"_Error" = "Failed to retrieve assignments!"
+						"AssignmentID" = "Dummy assignment"
 					}
 					$result = @($dummyAssignment)
 				}
@@ -462,13 +470,11 @@ function Compare-AssignmentRevisions {
 					"LocalApplications" {
 						$target = $result
 						$comp.localapplications = $target
-						$target = @($target).count
 						break
 					}
 					"LocalAssignments" {
 						$target = $result
 						$comp.localassignments = $target
-						$target = @($target).count
 						break
 					}
 					default {
@@ -478,18 +484,13 @@ function Compare-AssignmentRevisions {
 			}
 	
 			if($target) {
-				
 				switch($dataType) {
 					"LocalApplications" {
-						log "Retrieved $(count $comp.localapplications) local applications." -l 3
-						
-						$comp = Parse-Applications $comp
+						log "Retrieved $(count $target) local applications." -l 3
 						break
 					}
 					"LocalAssignments" {
-						log "Retrieved $(count $comp.localassignments) local assignments." -l 3
-						
-						$comp = Parse-Assignments $comp
+						log "Retrieved $(count $target) local assignments." -l 3
 						break
 					}
 					default {
@@ -503,7 +504,14 @@ function Compare-AssignmentRevisions {
 			}
 		}
 		else {
-			log "Computer `"$compName`" did not respond!" -l 3
+			log "Computer `"$compName`" did not respond! Saving one dummy assignment as a record for the CSV." -l 3
+			
+			$dummyAssignment = [PSCustomObject]@{
+				"_Error" = "Computer did not respond!"
+				"AssignmentID" = "Dummy assignment"
+			}
+			$comp.localassignments = @($dummyAssignment)
+			
 			$comp.skip = $true
 		}
 		log "Done getting $dataType for computer: `"$compName`"..." -l 2 -v 2
@@ -547,9 +555,7 @@ function Compare-AssignmentRevisions {
 			$assignment | Add-Member -NotePropertyName "_Make" -NotePropertyValue $comp.Make
 			$assignment | Add-Member -NotePropertyName "_Model" -NotePropertyValue $comp.Model
 			
-			if($assignment.AssignmentID -ne "Dummy assignment") {
-				$assignment = Parse-Assignment $assignment
-			}
+			$assignment = Parse-Assignment $assignment
 			
 			log "Done processing assignment with ID: `"$($assignment.AssignmentID)`"..." -l 4 -v 2
 		}
@@ -696,15 +702,21 @@ function Compare-AssignmentRevisions {
 	function Parse-Assignment($assignment) {
 		log "Parsing assignment..." -l 5 -v 1
 		
-		$assignment = Parse-AssignmentDeploymentType $assignment
-		$assignment = Parse-AssignmentCIs $assignment
-		$assignment = Parse-DesiredConfigType $assignment
-		$assignment = Get-AssignmentDeployment $assignment
-		$assignment = Get-AssignmentApplication $assignment
+		if($assignment.AssignmentID -ne "Dummy assignment") {
 		
-		$assignment = Compare-Revisions $assignment
-		$assignment = Compare-ModelNames $assignment
-		$assignment = Compare-DesiredConfigTypes $assignment
+			$assignment = Parse-AssignmentDeploymentType $assignment
+			$assignment = Parse-AssignmentCIs $assignment
+			$assignment = Parse-DesiredConfigType $assignment
+			$assignment = Get-AssignmentDeployment $assignment
+			$assignment = Get-AssignmentApplication $assignment
+			
+			$assignment = Compare-Revisions $assignment
+			$assignment = Compare-ModelNames $assignment
+			$assignment = Compare-DesiredConfigTypes $assignment
+		}
+		else {
+			log "Skipping assignment parsing as this is a dummy assignment." -l 6 -v 1
+		}
 		
 		log "Done parsing assignment." -l 5 -v 2
 		$assignment
@@ -1187,10 +1199,11 @@ function Compare-AssignmentRevisions {
 		# Make CSV file and add header row if file doesn't exist
 		if(!(Test-Path -PathType leaf -Path $CSVPATH)) {
 			$shutup = New-Item -ItemType File -Force -Path $CSVPATH
-			line "Computer,ClientVer,PSVer,OSVer,Make,Model,AssignmentID,AssignmentName,DeploymentName,DeploymentCollection,DeploymentContent,ApplicationName,AsConfigType,DepConfigType,ConfigTypesMatch,AsRev1,AsRev2,DepRev,AppRev1,AppRev2,RevsMatch,ModelsMatch,AsModel1,AsModel2,DepModel,AppModel1,AppModel2"
+			line "Computer,Error,ClientVer,PSVer,OSVer,Make,Model,AssignmentID,AssignmentName,DeploymentName,DeploymentCollection,DeploymentContent,ApplicationName,AsConfigType,DepConfigType,ConfigTypesMatch,AsRev1,AsRev2,DepRev,AppRev1,AppRev2,RevsMatch,ModelsMatch,AsModel1,AsModel2,DepModel,AppModel1,AppModel2"
 		}
 		
 		$line = "`"" + $assignment._Computer + "`"," +
+			"`"" + $assignment._Error + "`"," +
 			"`"" + $assignment._SCCMClientVersion + "`"," +
 			"`"" + $assignment._PSVersion + "`"," +
 			"`"" + $assignment._OSVersion + "`"," +
