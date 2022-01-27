@@ -7,7 +7,7 @@ The module takes an array of strings representing computer names, or a string re
 
 Much of this script is based on knowledge about problems and bugs with SCCM documented in a couple TechNet articles. From what I can tell, both of these issues (and more) are eventual results of this same underlying failure.
 - Apps don't all show up in Software Center: https://social.technet.microsoft.com/Forums/en-US/e0bd29ad-adf5-4c33-a2f2-740df8cc6c32/applications-not-visible-in-software-center?forum=configmanagerapps
-- Deployment reporting is all f'd up: https://social.technet.microsoft.com/Forums/en-US/8f54f591-073a-49b5-b433-cd6a0947a13a/all-deployments-reporting-ci-version-info-timed-out?forum=configmanagerapps
+- Deployment evaluation and reporting is all f'd up: https://social.technet.microsoft.com/Forums/en-US/8f54f591-073a-49b5-b433-cd6a0947a13a/all-deployments-reporting-ci-version-info-timed-out?forum=configmanagerapps
 
 # Table of contents
 - [Usage](#usage)
