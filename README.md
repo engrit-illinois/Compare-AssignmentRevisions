@@ -15,6 +15,7 @@ Much of this script is based on knowledge about problems and bugs with SCCM docu
 - [Remediation](#remediation)
 - [Parameters](#parameters)
 - [Technical details](#technical-details)
+- [Optimization opportunities and pitfalls](#optimization-opportunities-and-pitfalls)
 - [Notes](#notes)
 
 # Usage
