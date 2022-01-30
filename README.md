@@ -336,7 +336,7 @@ As suggested by our MECM admin team, the script could, instead of being run cent
 
 Admittedly I have no idea how much of an impact this would actually have on the MECM infrastructure. It could be minimal, even in the worst case. However I tend to err on the side of minimizing load, as our MECM infrastructure is already objectively and noticeably under heavy load, being a shared, multi-tenant implementation. And as we've been told previously, it is apparently the single largest instance at an academic institution.
 
-Additionally, this MECM-integration somewhat complicates the viewing/interpreting of the data (compared to just dumping a CSV), and likely adds a layer of asynchronization due to the (IMO) lazy nature by which MECM enforces things to happen on endpoints. Ultimately, I expect these downsides would just serve to increase the overall time to get at the hard results, or at best be comparable in speed while adding management overhead and general kludge.
+Additionally, this potential MECM-integrated solution somewhat complicates the workflow of gathering/viewing/interpreting the data, and likely adds a layer of asynchronization due to the lazy nature by which MECM enforces things to happen on endpoints. Ultimately, I expect these downsides would just serve to increase the overall time to get at the hard results, or at best be comparable in speed while adding management overhead and general kludge, compared to just running a Powershell command, and coming back the next morning to open a CSV.
 
 # Notes
 - Script built and tested with SCCM CB 1910, with Powershell 5.1.
