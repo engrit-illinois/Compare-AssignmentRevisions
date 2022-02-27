@@ -193,12 +193,10 @@ function Compare-AssignmentRevisions {
 				$comp = Get-Data "OSVersion" $comp
 				$comp = Get-Data "Model" $comp
 				
-				if(!$ComputerInfoOnly) {
-					# Never ended up doing anything with this localapplication info, so skip it to save on time and memory
-					#$comp = Get-Data "LocalApplications" $comp
-					
-					$comp = Get-Data "LocalAssignments" $comp
-				}
+				# Never ended up doing anything with this localapplication info, so skip it to save on time and memory
+				#$comp = Get-Data "LocalApplications" $comp
+				
+				$comp = Get-Data "LocalAssignments" $comp
 			}
 			
 			# Never ended up doing anything with this localapplication info, so skip it to save on time and memory
