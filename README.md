@@ -21,6 +21,7 @@ Much of this script is based on knowledge about problems and bugs with SCCM docu
 # Usage
 
 ### Prerequisites
+- Must be run in Windows PowerShell 5.1
 - Must be run on a machine with the SCCM Console app installed.
     - May need to customize `-CMPSModulePath` depending on version of Console. See [Parameters](#parameters).
 - WinRM (PSRemoting) must be properly configured on all machines to be polled.
