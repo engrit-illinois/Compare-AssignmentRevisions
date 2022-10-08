@@ -9,6 +9,8 @@ Much of this script is based on knowledge about problems and bugs with SCCM docu
 - Apps don't all show up in Software Center: https://social.technet.microsoft.com/Forums/en-US/e0bd29ad-adf5-4c33-a2f2-740df8cc6c32/applications-not-visible-in-software-center?forum=configmanagerapps
 - Deployment evaluation and reporting is all f'd up: https://social.technet.microsoft.com/Forums/en-US/8f54f591-073a-49b5-b433-cd6a0947a13a/all-deployments-reporting-ci-version-info-timed-out?forum=configmanagerapps
 
+See also: https://github.com/engrit-illinois/Get-CMAppDepTypeData.
+
 # Table of contents
 - [Usage](#usage)
 - [Interpretation](#interpretation)
