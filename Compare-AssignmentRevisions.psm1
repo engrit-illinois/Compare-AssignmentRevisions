@@ -194,12 +194,18 @@ function Compare-AssignmentRevisions {
 				$comp = Get-Data "Model" $comp
 				
 				# Never ended up doing anything with this localapplication info, so skip it to save on time and memory
+				# It would only be useful if we also retrieve data for each of its deployment types.
+				# Capturing and outputting application and application deployment type data along with assignment data would severely complicate this things due to the structure of this script.
+				# So I'll make a different script to gather that info.
 				#$comp = Get-Data "LocalApplications" $comp
 				
 				$comp = Get-Data "LocalAssignments" $comp
 			}
 			
 			# Never ended up doing anything with this localapplication info, so skip it to save on time and memory
+			# It would only be useful if we also retrieve data for each of its deployment types.
+			# Capturing and outputting application and application deployment type data along with assignment data would severely complicate this things due to the structure of this script.
+			# So I'll make a different script to gather that info.
 			#$comp = Parse-Applications $comp
 			
 			# Need to parse assignments regardless in case we have dummy assignments for when computers are unresponsive or don't return any assignments
@@ -300,9 +306,6 @@ function Compare-AssignmentRevisions {
 		
 		if(Test-Connection $compName -Quiet -Count 1) {
 			log "Computer `"$compName`" responded." -l 3 -v 2
-			
-			# TODO: skip further queries if the computer doesn't respond
-			# TODO: Stop sending quotes around $CIMTimeoutSec
 			
 			# Define variables and commands used for each dataType/queryType combo
 			switch($dataType) {
@@ -518,6 +521,12 @@ function Compare-AssignmentRevisions {
 	}
 	
 	function Parse-Applications($comp) {
+		
+		# Never ended up doing anything with this localapplication info, so skip it to save on time and memory
+		# It would only be useful if we also retrieve data for each of its deployment types.
+		# Capturing and outputting application and application deployment type data along with assignment data would severely complicate this things due to the structure of this script.
+		# So I'll make a different script to gather that info.
+		
 		<#
 		log "Parsing each local application..." -l 3
 		foreach($application in $comp.localapplications) {
