@@ -62,6 +62,8 @@ Then there's one app (`Git for Windows - Latest`) which has ~300 `MISMATCH!` ent
 
 <img src='example.png' width='500px' />
 
+In some cases I've seen mismatches where the Assignment revision is actually newer than the Deployment and/or Application revision. In my experience, these cases are usually a result of the application's revision being updated after the script has already polled the application's data from MECM. In other words, the script has just cached outdated information, so the mismatch is likely a false alarm.  
+
 For more in-depth troubleshooting, see the [Technical details](#technical-details) section below to get a feel for what all the values actually mean.  
 
 Note: Don't open the CSV file in Excel until the script is done, because Excel will lock the file and prevent the script from writing to it.  
