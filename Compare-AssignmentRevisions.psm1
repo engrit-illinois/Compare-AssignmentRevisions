@@ -1095,6 +1095,39 @@ function Compare-AssignmentRevisions {
 			}
 			else {
 				log "REVISIONS DO NOT MATCH!" -nots -v 1
+				
+				log "Evaluating mismatch reasons..." -l 6 -v 1
+				$reasons = @()
+				
+				if(
+					($as1 -ne $as2) -or 
+					($app1 -ne $app2)
+				) {
+					if($as1 -ne $as2) {
+						$reason = "Assignment disagrees with itself!"
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+						# I've never seen this happen, so I don't feel the need to evaluate any further
+					}
+					if($app1 -ne $app2) {
+						$reason = "Application disagrees with itself!"
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+						# I've never seen this happen, so I don't feel the need to evaluate any further
+					}
+				}
+				else {
+					if($as1 -lt $app1) {
+						$reason = "Assignment revision is older than the application revision; This probably means a bad client, or bad app/deployment!"
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+					if($as1 -gt $app1) {
+						$reason = "Assignment revision is newer than the application revision. This probably just means the application was updated during the script's execution, and is a false alarm."
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+				}
 			}
 		}
 		elseif($assignment._DepType -eq "app") {
@@ -1109,6 +1142,66 @@ function Compare-AssignmentRevisions {
 			}
 			else {
 				log "REVISIONS DO NOT MATCH!" -nots -v 1
+				
+				log "Evaluating mismatch reasons..." -l 6 -v 1
+				$reasons = @()
+				
+				if(
+					($as1 -ne $as2) -or 
+					($app1 -ne $app2)
+				) {
+					if($as1 -ne $as2) {
+						$reason = "Assignment disagrees with itself!"
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+					if($app1 -ne $app2) {
+						$reason = "Application disagrees with itself!"
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+					if(
+						($dep -lt $app1) -or
+						($dep -lt $app2)
+					) {
+						$reason = "Deployment revision is older than the application revision!"
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+					# I've never seen any of these cases happen, so I don't feel the need to evaluate any further
+				}
+				else {
+					if($as1 -lt $app1) {
+						$reason = "Assignment revision is older than the application revision; This probably means a bad client, or bad app/deployment!"
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+					if($as1 -gt $app1) {
+						$reason = "Assignment revision is newer than the application revision; This probably just means the application was updated during the script's execution, and is likely a false alarm."
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+					if($dep -lt $app1) {
+						$reason = "Deployment revision is older than the applicaiton revision; I don't actually know why this would be the case!"
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+					if($dep -gt $app1) {
+						$reason = "Deployment revision is newer than the application revision; This probably just means the application was updated during the script's execution, and is likely a false alarm."
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+					if($as1 -lt $dep) {
+						$reason = "Assignment revision is older than the deployment revision; This probably means a bad client, or bad app/deployment!"
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+					if($as1 -gt $dep) {
+						$reason = "Assignment revision is newer than the deployment revision; This probably just means the application was updated during the script's execution, and is likely a false alarm."
+						log $reason -l 7 -v 1
+						$reasons += @($reason)
+					}
+				}
 			}
 		}
 		else {
@@ -1117,6 +1210,10 @@ function Compare-AssignmentRevisions {
 		}
 		
 		$assignment | Add-Member -NotePropertyName "_AllRevisionsMatch" -NotePropertyValue $same
+		
+		$reasonsString = ""
+		if((count @($reasons)) -gt 0) { $reasonsString = @($reasons) -join " " }
+		$assignment | Add-Member -NotePropertyName "_MismatchReasons" -NotePropertyValue $reasonsString
 		
 		log "Done comparing revisions." -l 5 -v 2
 		$assignment
@@ -1206,7 +1303,7 @@ function Compare-AssignmentRevisions {
 		# Make CSV file and add header row if file doesn't exist
 		if(!(Test-Path -PathType leaf -Path $CSVPATH)) {
 			$shutup = New-Item -ItemType File -Force -Path $CSVPATH
-			line "Computer,Error,ClientVer,PSVer,OSVer,Make,Model,AssignmentID,AssignmentName,DeploymentName,DeploymentCollection,DeploymentContent,ApplicationName,AsConfigType,DepConfigType,ConfigTypesMatch,AsRev1,AsRev2,DepRev,AppRev1,AppRev2,RevsMatch,ModelsMatch,AsModel1,AsModel2,DepModel,AppModel1,AppModel2"
+			line "Computer,Error,ClientVer,PSVer,OSVer,Make,Model,AssignmentID,AssignmentName,DeploymentName,DeploymentCollection,DeploymentContent,ApplicationName,AsConfigType,DepConfigType,ConfigTypesMatch,AsRev1,AsRev2,DepRev,AppRev1,AppRev2,RevsMatch,MismatchReasons,ModelsMatch,AsModel1,AsModel2,DepModel,AppModel1,AppModel2"
 		}
 		
 		$line = "`"" + $assignment._Computer + "`"," +
@@ -1231,6 +1328,7 @@ function Compare-AssignmentRevisions {
 			"`"" + $assignment._Application._Revision + "`"," +
 			"`"" + $assignment._Application.CIVersion + "`"," +
 			"`"" + $assignment._AllRevisionsMatch + "`"," +
+			"`"" + $assignment._MismatchReasons + "`"," +
 			"`"" + $assignment._AllModelNamesMatch + "`"," +
 			"`"" + $assignment._ModelName + "`"," +
 			"`"" + $assignment._CI.ModelName + "`"," +

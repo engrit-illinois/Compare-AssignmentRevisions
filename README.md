@@ -46,6 +46,7 @@ If you change the script after importing the module, you must reimport the modul
 # Interpretation
 The primary way to identify problems is to look at the `RevsMatch` column of the output CSV file.  
 If you see any entries with `MISMATCH!` in the `RevsMatch` field, then you know something is wrong.  
+The `MismatchReasons` field tries to provide some insight, based on the nature of the mismatch.  
 
 The other thing to watch out for is missing values. Values which are expected to be missing are given filler values in the output CSV, so empty cells also mean something is wrong.  
 When viewing the CSV in Excel, it's advisable to select all blank cells and fill them with whitespace.  
@@ -62,7 +63,7 @@ Then there's one app (`Git for Windows - Latest`) which has ~300 `MISMATCH!` ent
 
 <img src='example.png' width='500px' />
 
-In some cases I've seen mismatches where the Assignment revision is actually newer than the Deployment and/or Application revision. In my experience, these cases are usually a result of the application's revision being updated after the script has already polled the application's data from MECM. In other words, the script has just cached outdated information, so the mismatch is likely a false alarm.  
+In some cases I've seen mismatches where the Assignment revision is actually newer than the Deployment and/or Application revision. In my experience, this is always a result of the application's revision being incremented after the script has already polled the application's data from MECM. In other words, the script has just cached outdated information, so the mismatch is likely a false alarm.  
 
 For more in-depth troubleshooting, see the [Technical details](#technical-details) section below to get a feel for what all the values actually mean.  
 
@@ -244,6 +245,7 @@ Fields output to the CSV are documented below. The source for each field is note
 - `AppRev1`: Source #10. The revision of the app, as stored by the applicaiton object.
 - `AppRev2`: Source #10. The revision is stored in the application object in two places, so I'm capturing both. However I've never seen an instance where these two differ within the same application object.
 - `RevsMatch`: Calculated. If all 5 revisions (above) match, the value is `yes`. If they don't, the value is `MISMATCH!`. This field is the raison d'etre for this script.
+- `MismatchReasons`: Calculated. A concatenated array of string messages which try to provide some insight about mismatches, based on the nature of the mismatch.
 - `ModelsMatch`: Calculated. If all 5 ModelNames (below) match, the value is `yes`. If they don't, the value is `MISMATCH!`.
 - `AsModel1`: Source #6. The `ModelName` of the app, as stored by the assignment.
 - `AsModel2`: Source #6. The `ModelName` is stored in the assignment in two places, so I'm capturing both. However I've never seen an instance where these two differ within the same assignment.
