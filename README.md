@@ -35,7 +35,7 @@ Lastly, at some point there was apparently yet another cause of these same sympt
 If any of the last three prerequisites aren't met, the script will fail to poll various data for the relevant machine, and will move on to the next.  
 
 ### Instructions
-1. Download `Compare-AssignmentRevisions.psm1` to `$HOME\Documents\WindowsPowerShell\Modules\Compare-AssignmentRevisions\Compare-AssignmentRevisions.psm1`
+1. Download `Compare-AssignmentRevisions.psm1` to the appropriate subdirectory of your PowerShell [modules directory](https://github.com/engrit-illinois/how-to-install-a-custom-powershell-module).
 2. Run it, e.g.:
     - `Compare-AssignmentRevisions -SiteCode "MP0" -Provider "sccmcas.company.com" -Collection "Collection Name"`
     - `Compare-AssignmentRevisions -SiteCode "MP0" -Provider "sccmcas.company.com" -Computers "computer-name-01"`
