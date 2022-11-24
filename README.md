@@ -9,7 +9,7 @@ Much of this script is based on knowledge about problems and bugs with SCCM docu
 - Apps don't all show up in Software Center: https://social.technet.microsoft.com/Forums/en-US/e0bd29ad-adf5-4c33-a2f2-740df8cc6c32/applications-not-visible-in-software-center?forum=configmanagerapps
 - Deployment evaluation and reporting is all f'd up: https://social.technet.microsoft.com/Forums/en-US/8f54f591-073a-49b5-b433-cd6a0947a13a/all-deployments-reporting-ci-version-info-timed-out?forum=configmanagerapps
 
-See also: https://github.com/engrit-illinois/Get-CMAppDepTypeData.
+Note: the underlying issue this script looks for is only one of a handful of issues which can cause the symptoms described above. See [Get-CMAppDepTypeData ](https://github.com/engrit-illinois/Get-CMAppDepTypeData) for another script to help identify a similar but technically different issue.  
 
 Lastly, at some point there was apparently yet another cause of these same symptoms, surrounding message size limitations being exceeded due to large App icons. From what I can tell, this has since been fixed, but it's worth noting here: https://www.dptechjournal.net/2019/04/missing-software-in-software-center.html.
 
