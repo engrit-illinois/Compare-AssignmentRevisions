@@ -122,7 +122,7 @@ function Compare-AssignmentRevisions {
 		$count
 	}
 
-	function Prep-SCCM {
+	function Prep-MECM {
 		log "Preparing connection to SCCM..."
 		$initParams = @{}
 		if((Get-Module ConfigurationManager) -eq $null) {
@@ -1398,7 +1398,7 @@ function Compare-AssignmentRevisions {
 		log " " -nots
 		
 		$myPWD = $pwd.path
-		Prep-SCCM
+		Prep-MECM
 		
 		$compNames = Get-CompNames
 		if($compNames) {
