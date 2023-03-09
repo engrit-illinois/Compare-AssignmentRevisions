@@ -24,7 +24,7 @@ Lastly, at some point there was apparently yet another cause of these same sympt
 
 # Usage
 
-### Prerequisites
+### Requirements
 - Must be run in Windows PowerShell 5.1
 - Must be run on a machine with the SCCM Console app installed.
     - May need to customize `-CMPSModulePath` depending on version of Console. See [Parameters](#parameters).
