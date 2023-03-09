@@ -32,7 +32,7 @@ Lastly, at some point there was apparently yet another cause of these same sympt
 - Powershell must be run as a user with local admin permissions on the machines to be polled.
 - Powershell must be run as a user with read permissions to all relevant content in SCCM.
 
-If any of the last three prerequisites aren't met, the script will fail to poll various data for the relevant machine, and will move on to the next.  
+If any of the last three requirements aren't met, the script will fail to poll various data for the relevant machine, and will move on to the next.  
 
 ### Instructions
 1. Download `Compare-AssignmentRevisions.psm1` to the appropriate subdirectory of your PowerShell [modules directory](https://github.com/engrit-illinois/how-to-install-a-custom-powershell-module).
