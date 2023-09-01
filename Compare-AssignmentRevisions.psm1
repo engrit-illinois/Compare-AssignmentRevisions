@@ -600,15 +600,21 @@ function Compare-AssignmentRevisions {
 			}
 			
 			# Check that the two match
-			switch($configTypeNum) {
-				1 { $configTypeNumString = "Install" }
-				2 { $configTypeNumString = "Uninstall" }
-				Default { $configTypeNumString = "Invalid" }
+			
+			# Check that $configTypeNum is actually an int. I think sometimes it's stored as a tring for some reason
+			$configTypeNumType = $configTypeNum.GetType().Name
+			log "`$configTypeNum's type is `"$configTypeNumType`"." -l 7 -v 3
+			
+			$configTypeNumString = "$configTypeNum"
+			switch($configTypeNumString) {
+				"1" { $configTypeNumTranslation = "Install" }
+				"2" { $configTypeNumTranslation = "Uninstall" }
+				Default { $configTypeNumTranslation = "Invalid" }
 			}
-			$result = $configTypeNumString
-			if($configTypeNumString -ne $configTypeNameString) {
-				log "Assignment/App deployment disagrees with itself on its DesiredConfigType! DesiredConfigType is `"$configTypeNum`", while AssignmentName contains `"$configTypeNameString`"." -l 6 -v 2
-				$result = "INVALID!"
+			$result = $configTypeNumTranslation
+			if($configTypeNumTranslation -ne $configTypeNameString) {
+				log "Assignment/App deployment disagrees with itself on its DesiredConfigType! DesiredConfigType raw value is `"$configTypeNum`", raw value typed to a string is `"$configTypeNumString`", translation is `"$configTypeNumTranslation`", and AssignmentName contains `"$configTypeNameString`"." -l 6 -v 2
+				$result = "INVALID! (Num: [$configTypeNum], NumString: [$configTypeNumString], NumTranslation: [$configTypeNumTranslation], NameString: [$configTypeNameString])"
 				
 				log "Checking if this assignment is for a previous deployment with implicit uninstall configured..." -l 7 -v 2
 				
@@ -621,17 +627,28 @@ function Compare-AssignmentRevisions {
 				# AdditionalProperties is in XML format, translate into object and save
 				# https://stackoverflow.com/questions/3935395/loading-xml-string-with-powershell
 				if($dep.AdditionalProperties -and ($dep.AdditionalProperties -ne "")) {
+					log "Deployment AdditionalProperties exist and are not empty." -l 8 -v 3
 					$propsXmlObject = New-Object -TypeName System.Xml.XmlDocument
 					$propsXmlObject.LoadXml($dep.AdditionalProperties)
 				}
+				else {
+					log "Deployment AdditionalProperties exist are empty!" -l 8 -v 3
+				}
 				
 				$implicitUninstallValue = $propsXmlObject.Properties.ImplicitUninstallEnabled
+				log "ImplicitUninstallEnabled: `"$implicitUninstallValue`"." -l 8 -v 3
 				if($implicitUninstallValue) {
-					log "ImplicitUninstallEnabled: `"$implicitUninstallValue`"." -l 8 -v 2
-					
+					log "ImplicitUninstallEnabled value exists." -l 8 -v 3
 					if($implicitUninstallValue -eq "true") {
+						log "ImplicitUninstallEnabled value is `"true`"." -l 8 -v 3
 						$result = "ImplicitUninstall"
 					}
+					else {
+						log "ImplicitUninstallEnabled value is not `"true`"." -l 8 -v 3
+					}
+				}
+				else {
+					log "ImplicitUninstallEnabled value doesn't exist or is not `"true`"." -l 8 -v 3
 				}
 				
 				if($result -eq "ImplicitUninstall") {
@@ -1223,16 +1240,23 @@ function Compare-AssignmentRevisions {
 		log "Comparing DesiredConfigTypes of assignment and application... " -l 5 -v 1 -nnl
 		
 		# Save custom property for whether the revisions match, for easy table printout
-		$ascf = $assignment._DesiredConfigType
-		$depcf = $assignment._Deployment._DesiredConfigType
+		$asDct = $assignment._DesiredConfigType
+		$depDct = $assignment._Deployment._DesiredConfigType
 		
 		$same = "MISMATCH!"
-		if($ascf -eq $depcf) {
+		if($asDct -eq $depDct) {
 			$same = "yes"
-			log "DesiredConfigTypes match." -nots -v 1
+			log "DesiredConfigTypes match." -l 6 -v 1
 		}
 		else {
-			log "DesiredConfigTypes do not match!" -nots -v 1
+			log "DesiredConfigTypes do not match!" -l 6 -v 1
+			if($asDct -eq "ImplicitUninstall") {
+				log "Mismatch is due to ImplicitUninstall." -l 7 -v 1
+				$same = "Mismatch expected due to ImplicitUninstall"
+			}
+			else {
+				log "Mismatch is not due to ImplicitUninstall!" -l 7 -v 1
+			}
 		}
 		
 		$assignment | Add-Member -NotePropertyName "_DesiredConfigTypesMatch" -NotePropertyValue $same
