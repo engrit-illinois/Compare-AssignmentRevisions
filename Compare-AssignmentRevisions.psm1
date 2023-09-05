@@ -123,7 +123,7 @@ function Compare-AssignmentRevisions {
 	}
 
 	function Prep-MECM {
-		log "Preparing connection to SCCM..."
+		log "Preparing connection to MECM..."
 		$initParams = @{}
 		if((Get-Module ConfigurationManager) -eq $null) {
 			# The ConfigurationManager Powershell module switched filepaths at some point around CB 18##
@@ -134,7 +134,7 @@ function Compare-AssignmentRevisions {
 			New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $Provider @initParams
 		}
 		Set-Location "$($SiteCode):\" @initParams
-		log "Done prepping connection to SCCM." -v 2
+		log "Done prepping connection to MECM." -v 2
 	}
 	
 	# Make array of objects representing computers
