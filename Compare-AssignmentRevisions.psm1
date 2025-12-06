@@ -38,7 +38,9 @@ function Compare-AssignmentRevisions {
 		
 		[string]$LogPath="c:\engrit\logs\Compare-AssignmentRevisions_$(Get-Date -Format `"yyyy-MM-dd_HH-mm-ss-ffff`").log",
 		
-		[int]$Verbosity=0
+		[int]$Verbosity=0,
+		
+		[switch]$DisablePsVersionCheck
 	)
 	
 	$CSVPATH = $LogPath -replace "\.log",".csv"
@@ -120,6 +122,31 @@ function Compare-AssignmentRevisions {
 			# We can't simply do $array.count, because if it's null, that would throw an error due to trying to access a method on a null object
 		}
 		$count
+	}
+	
+	function Validate-SupportedPowershellVersion {
+		if(-not (Test-SupportedPowershellVersion)) {
+			Throw "Unsupported PowerShell version!"
+		}
+	}
+
+	function Test-SupportedPowershellVersion {
+		if($DisablePsVersionCheck) {
+			log "-DisablePsVersionCheck was specified. Skipping PowerShell version check."
+			return $true
+		}
+		
+		log "This custom module only supports PowerShell v5.1. Checking PowerShell version..."
+		
+		$ver = $Host.Version
+		log "PowerShell version is `"$($ver.Major).$($ver.Minor)`"." -L 1
+		if(
+			($ver.Major -eq 5) -and
+			($ver.Minor -eq 1)
+		) {
+			return $true
+		}
+		return $false
 	}
 
 	function Prep-MECM {
@@ -1418,6 +1445,8 @@ function Compare-AssignmentRevisions {
 	
 	function Do-Stuff {
 		$startTime = Get-Date
+		
+		Validate-SupportedPowershellVersion
 		
 		log " " -nots
 		

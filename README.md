@@ -152,6 +152,10 @@ Using a value greater than `0` will result in a very large log file when scannin
 - `2`: Outputs most steps taken for every assignment, several of the values gathered, and outputs when each step is done.  
 - `3`: Misc. debug/test output.
 
+### -DisablePsVersionCheck
+Optional switch.  
+When specified the module will attempt to run regardless of the current version of PowerShell.  
+Normally, the module refuses to run if the current version of PowerShell is greater than 5.1.  
 
 ### -CIMTimeoutSec
 Optional integer. Specifies the number of seconds to wait when polling a machine for data via CIM before timing out and moving on.  
